@@ -45,3 +45,46 @@ depends() { # Выводит все зависимости от которых �
 install() {
     inst_hook cleanup 00 "${moddir}/test.sh" # Запускает скрипт
 }```
+
+В файле test.sh:
+```
+#!/bin/bash
+
+cat <<'msgend'
+Hello! You are in dracut module!
+ ___________________
+< I'm dracut module >
+ -------------------
+   \
+    \
+        .--.
+       |o_o |
+       |:_/ |
+      //   \ \
+     (|     | )
+    /'\_   _/`\
+    \___)=(___/
+msgend
+sleep 10
+echo " continuing...."
+```
+- Далее выполняем команду dracut -f -v
+- Перезагружаемся и видим пингвина
+
+4. Сконфигурировать систему без отдельного раздела с /boot, а только с LVM:
+
+```
+parted, далее select /dev/sdb, mklabel msdos, mkpart 1 -1
+pvcreate /dev/sdb1/ --bootloaderareasize 1M
+vgcreate newRoot /dev/sdb1
+lvcreate -n root -l 100%FREE newOtus Получаем: /dev/mapper/newRoot-root`
+[root@lvm ~]# pvs
+  PV         VG      Fmt  Attr PSize   PFree
+  /dev/sda1  newRoot lvm2 a--  <10.00g    0
+[root@lvm ~]# vgs
+  VG      #PV #LV #SN Attr   VSize   VFree
+  newRoot   1   1   0 wz--n- <10.00g    0
+[root@lvm ~]# lvs
+  LV   VG      Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  root newRoot -wi-ao---- <10.00g
+  ```
