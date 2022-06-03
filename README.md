@@ -72,7 +72,7 @@ echo " continuing...."
 - Далее выполняем команду dracut -f -v
 - Перезагружаемся и видим пингвина
 
-4. Сконфигурировать систему без отдельного раздела с /boot, а только с LVM:
+**4. Сконфигурировать систему без отдельного раздела с /boot, а только с LVM:**
 
 ```
 parted, далее select /dev/sdb, mklabel msdos, mkpart 1 -1
@@ -89,3 +89,18 @@ lvcreate -n root -l 100%FREE newOtus Получаем: /dev/mapper/newRoot-root`
   LV   VG      Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
   root newRoot -wi-ao---- <10.00g
   ```
+- mkfs.ext4 /dev/mapper/newRoot-root
+- mkdir /mnt/root
+- mount /dev/mapper/newRoot-root /mnt/root
+- rsync -avx / /mnt/root; rsync -avx /boot /mnt/root
+- mount --rbind /dev/ /mnt/root/dev; mount --rbind /proc /mnt/root/proc; mount --rbind /sys /mnt/root/sys; mount --rbind /run /mnt/root/run
+- chroot /mnt/root
+- yum-config-manager --add-repo=https://yum.rumyantsev.com/centos/7/x86_64/
+- yum install grub2 -y --nogpgcheck
+- cat /etc/fstab, меняем на наш новый lvm/dev/mapper/newRoot-root / и комментируем /boot
+- nano /etc/default/grub и меняем в GRUB_CMDLINE_LINUX значение rd.lvm.lv на rd.lvm.lv=newRoot/root
+- grub2-mkconfig -o /boot/grub2/grub.cfg
+- dracut -f -v /boot/initramfs-3.10.0-862.2.3.el7.x86_64.img
+- grub2-install /dev/sdb
+- nano /etc/selinux/config и выключить значением SELINUX Disabled
+- выходим и загружаемся с нового диска
